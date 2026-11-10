@@ -1,0 +1,40 @@
+server:
+  port: 8088   # 8080 被 RocketMQ Proxy 的 Remoting 端口占用，改用 8088
+  shutdown: graceful
+
+spring:
+  application:
+    name: rocketmq5-demo
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
+  # H2 内存库：零外部依赖，本地跑通幂等表与事务消息示例
+  datasource:
+    url: jdbc:h2:mem:rocketmq5demo;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+
+rocketmq:
+  producer:
+    endpoints: 127.0.0.1:8081   # Proxy 的 gRPC 地址（不是 NameServer 的 9876），多个以分号分隔
+    topic: OrderTransTopic      # 可选；事务消息场景建议预先声明，用于预取路由
+  push-consumer:
+    endpoints: 127.0.0.1:8081   # 监听类未单独指定 endpoints 时使用
+  # SimpleConsumer 默认关闭；需要时取消注释，SimpleOrderPoller 会自动启用
+  # simple-consumer:
+  #   endpoints: 127.0.0.1:8081
+  #   consumer-group: GID_order_simple
+  #   topic: OrderNormalTopic
+  #   tag: "*"
+  #   filter-expression-type: tag
+
+# 业务自定义：集中管理 Topic 名称
+app:
+  mq:
+    normal-topic: OrderNormalTopic
+    fifo-topic: OrderFifoTopic
+    delay-topic: OrderDelayTopic
+    trans-topic: OrderTransTopic
